@@ -2,7 +2,7 @@ const request = require('request')
 const md5 = require('md5')
 const {result, map , each} = require('lodash')
 const {writeFileSync} = require('fs')
-const Core = require('./Libs/Core')
+const Core = require('./Libs/youtube/Core')
 
 const domain = 'https://www.youtube.com'
 const url = `${domain}/results`
