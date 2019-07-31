@@ -3,7 +3,7 @@
 const TimeConverter = require('./TimeConverter')
 const YoutubeComments = require('./YoutubeComments')
 const RequestOptions = require('./RequestOptions')
-const DbAdapter = require('./DbAdapter')
+const DbAdapter = require('../DbAdapter')
 
 class Core {
     constructor () {
