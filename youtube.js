@@ -3,25 +3,37 @@ const md5 = require('md5')
 const {result, map , each} = require('lodash')
 const {writeFileSync} = require('fs')
 const Core = require('./Libs/youtube/Core')
+const Filter = require('./Libs/StreamFilter')
 
 const domain = 'https://www.youtube.com'
 const url = `${domain}/results`
 const qconfig = 'CAISBAgCEAE%253D'
 
 let firstResultId = ''
-let dataAllJson = []
+// let dataAllJson = []
+// https://stackoverflow.com/questions/9768444/possible-eventemitter-memory-leak-detected/26176922
+process.setMaxListeners(0)
 
 class App extends Core {
     constructor () {
         super(Core)
+        // initial mongo connection
+        this
+            .db_adapter
+            .initMongoModels()
+            .mongoModels(['Streams'])
+        // initial mysql connection
+        this
+            .db_adapter
+            .initMysql(['RippleClientKeyword'])
     }
 
-    generateContentStream (content = [], project = {}) {
+    async generateContentStream (content = [], project = {}) {
         if (content.length <= 0) {
             return null
         }
-        let streams = []
-        let videos = []
+        let unFilteredStreams = []
+        let vd = {}
         for (const d of content) {
             // if (d < 5) writeFileSync(`/tmp/data${d}.txt`, JSON.stringify(content[d]), {encoding: 'utf-8'})
             const {
@@ -64,6 +76,7 @@ class App extends Core {
                     keyword,
                     client,
                     brand: 0,
+                    is_trash: 0,
                     service: 'youtube',
                     sentiment: {
                         status: false,
@@ -71,14 +84,21 @@ class App extends Core {
                     },
                     query: project.keyword || ''
                 }
-                streams.push(data)
-                videos.push({id: videoId, parent: {id: data.stream_id, text: data.text}})
+                unFilteredStreams.push(data)
+                vd[data.stream_id] = videoId
             } else {
                 console.log(d.videoRenderer)
             }
         }
-    
-        // console.log({streams})
+        const {keyword, include, exclude} = project
+        const streams = await new Filter({
+            key_in: include,
+            key_ex: exclude,
+            keyword: [keyword]
+        })
+            .filter(unFilteredStreams)
+        const videos = streams.map(x => ({id: vd[x.stream_id], parent: {id: x.stream_id, text: x.text}}))
+        console.log('...[filter]', streams.length, 'data')
         return {streams, videos}
     }
     
@@ -88,14 +108,14 @@ class App extends Core {
             try {
                 const {query, patch, project} = args
                 const requestOptions = this.req_options.getReqOptions(args)
-                request(requestOptions, (err, res, resBody) => {
+                request(requestOptions, async (err, res, resBody) => {
                     if (err) console.log(err)
                     const JsonBody = JSON.parse(resBody)
                     const itemBody = result(JsonBody, '[1].response.continuationContents.itemSectionContinuation', {})
                     const contentBody = result(itemBody, 'contents')
                     const continueToken = result(itemBody, 'continuations[0].nextContinuationData.continuation', '')
                     // mapping all content to stream schema
-                    const {streams, videos} = this.generateContentStream(contentBody, project)
+                    const {streams, videos} = await this.generateContentStream(contentBody, project)
                     // save data to collection "streams"
                     this.db_adapter.saveStreamToCollection(streams).then()
                     // get comments from main post
@@ -103,7 +123,7 @@ class App extends Core {
                         .then((comments) => {
                             console.log(`[finish] : count ${comments.length} row`)
                             this.db_adapter.saveStreamToCollection(comments).then()
-                            dataAllJson = dataAllJson.concat(streams, comments)
+                            // dataAllJson = dataAllJson.concat(streams, comments)
                         })
                         .catch((err) => {
                             console.log(err)
@@ -128,14 +148,14 @@ class App extends Core {
             try {
                 const {query, patch, project} = args
                 const reqOtps = this.req_options.getReqOptions(args)
-                request(reqOtps, (err, res, resBody) => {
+                request(reqOtps, async (err, res, resBody) => {
                     if (err) console.log(err)
                     const JsonBody = JSON.parse(resBody)
                     const itemBody = result(JsonBody, '[1].response.contents.twoColumnSearchResultsRenderer.primaryContents.sectionListRenderer.contents[0].itemSectionRenderer', {})
                     const contentBody = result(itemBody, 'contents')
                     const continueToken = result(itemBody, 'continuations[0].nextContinuationData.continuation', '')
                     // mapping all content to stream schema
-                    const {streams, videos} = this.generateContentStream(contentBody, project)
+                    const {streams, videos} = await this.generateContentStream(contentBody, project)
                     // save data to collection "streams"
                     this.db_adapter.saveStreamToCollection(streams).then()
                     // get comments from main post
@@ -143,7 +163,7 @@ class App extends Core {
                         .then((comments) => {
                             console.log(`[finish] : count ${comments.length} row`)
                             this.db_adapter.saveStreamToCollection(comments).then()
-                            dataAllJson = dataAllJson.concat(streams, comments)
+                            // dataAllJson = dataAllJson.concat(streams, comments)
                         })
                         .catch((err) => {
                             console.log(err)
@@ -170,87 +190,121 @@ class App extends Core {
         })
     }
 
-    start (options = {}) {
-        const {qsearch, keyid, client} = options
-        const patch = this.req_options.randomPatch()
-        const opt = {
-            method: 'GET',
-            url,
-            qs: {
-                search_query: qsearch,
-                sp: qconfig,
-            },
-            headers: {
-                'User-Agent': `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3774${patch} Safari/537.36`,
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3'
-            }
-        };
-        request(opt, (error, response, body) =>{
-            try {
-                if (error) throw new Error(error)
-                let continueToken = body.match(/"continuation":"(.*?)"/img)
-                let sessionToken = body.match(/"XSRF_TOKEN":"(.*?)"/img) // xsrf
-                // writeFileSync('/tmp/text-html.html', body, {encode: 'utf-8'})
-                if (!sessionToken || !continueToken) {
-                    throw new Error('Invalid Session or Continue Token!')
+    doSearching (options = {}) {
+        return new Promise((resolve, reject) => {
+            const {qsearch, keyid, client, include, exclude} = options
+            const patch = this.req_options.randomPatch()
+            const opt = {
+                method: 'GET',
+                url,
+                qs: {
+                    search_query: qsearch,
+                    sp: qconfig,
+                },
+                headers: {
+                    'User-Agent': `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3774${patch} Safari/537.36`,
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3'
                 }
-                continueToken = result(continueToken, '[0]', '')
-                    .replace('"continuation":"', '')
-                    .replace('"', '')
-                sessionToken = result(sessionToken, '[0]', '')
-                    .replace('"XSRF_TOKEN":"', '')
-                    .replace('"', '')
+            };
+            console.log(`[search]: searching keyword (${keyid}: ${qsearch})`)
+            request(opt, (error, response, body) =>{
+                try {
+                    if (error) throw new Error(error)
+                    let continueToken = body.match(/"continuation":"(.*?)"/img)
+                    let sessionToken = body.match(/"XSRF_TOKEN":"(.*?)"/img) // xsrf
+                    // writeFileSync('/tmp/text-html.html', body, {encode: 'utf-8'})
+                    if (!sessionToken || !continueToken) {
+                        throw new Error('Invalid Session or Continue Token!')
+                    }
+                    continueToken = result(continueToken, '[0]', '')
+                        .replace('"continuation":"', '')
+                        .replace('"', '')
+                    sessionToken = result(sessionToken, '[0]', '')
+                        .replace('"XSRF_TOKEN":"', '')
+                        .replace('"', '')
+        
+                    // ambil data 20 pertama di pencarian
+                    const firstArgs = {
+                        project: {
+                            id: keyid,
+                            client,
+                            keyword: qsearch,
+                            include,
+                            exclude
+                        },
+                        cToken: '',
+                        sToken: sessionToken,
+                        query: qsearch,
+                        patch
+                    }
     
-                // ambil data 20 pertama di pencarian
-                const firstArgs = {
-                    project: {
-                        id: keyid,
-                        client,
-                        keyword: qsearch
-                    },
-                    cToken: '',
-                    sToken: sessionToken,
-                    query: qsearch,
-                    patch
-                }
-
-                this.getFirstPage(firstArgs)
-                    .then(async (res) => {
-                        // console.log({keyid,client})
-                        let {hasNext, cToken, sToken, query, patch} = res;
-                        while(hasNext) {
-                            try {
-                                const nextArgs = {
-                                    cToken,
-                                    sToken,
-                                    query,
-                                    patch,
-                                    project: {
-                                        id: keyid,
-                                        client
+                    this.getFirstPage(firstArgs)
+                        .then(async (res) => {
+                            let {hasNext, cToken, sToken, query, patch} = res;
+                            while(hasNext) {
+                                try {
+                                    const nextArgs = {
+                                        cToken,
+                                        sToken,
+                                        query,
+                                        patch,
+                                        project: {
+                                            id: keyid,
+                                            client,
+                                            keyword: query,
+                                            include,
+                                            exclude
+                                        }
                                     }
+                                    await this.sleep(10)
+                                    const next = await this.getNextPage(nextArgs)
+                                    hasNext = next.hasNext
+                                    cToken = next.cToken
+                                    sToken = next.sToken
+                                } catch (err) {
+                                    console.log(err)
                                 }
-                                await this.sleep(10)
-                                const next = await this.getNextPage(nextArgs)
-                                hasNext = next.hasNext
-                                cToken = next.cToken
-                                sToken = next.sToken
-                            } catch (err) {
-                                console.log(err)
                             }
-                        }
-                        writeFileSync('/tmp/allstreams.json', JSON.stringify(dataAllJson), {encoding: 'utf-8'})
-                    })
-                    .catch((err) => {throw err})
-            } catch (err) {
-                console.log(err)
-            }
-        });
+                            await this.sleep(10)
+                            resolve()
+                            // writeFileSync('/tmp/allstreams.json', JSON.stringify(dataAllJson), {encoding: 'utf-8'})
+                        })
+                        .catch((err) => {throw err})
+                } catch (err) {
+                    reject(err)
+                }
+            });
+        })
+    }
+
+    start (keyids = '') {
+        const ids = []
+        keyids = keyids.split(',')
+        for (const id of keyids){
+            ids.push(parseInt(id))
+        }
+        this.db_adapter.getClientKeyword(ids)
+            .then(async (keywordData) =>{
+                for(const key of keywordData){
+                    const options = key.key_word
+                        .split(',')
+                        .map(x => x.trim())
+                        .filter(x => x.length > 0)
+                        .map(x => ({
+                            qsearch: x,
+                            keyid: key.keyId,
+                            client: key.clientId,
+                            include: key.KeyInclude,
+                            exclude: key.KeyExclude
+                        }))
+                    for(const opt of options){
+                        await this.doSearching(opt)
+                    }
+                }
+                process.exit(0)
+            })
+            .catch(console.error)
     }
 }
 
-new App().start({
-    qsearch: 'indomie',
-    keyid: 820,
-    client: 15
-})
+new App().start('55')
