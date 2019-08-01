@@ -60,6 +60,7 @@ module.exports = {
                 keyword: projectId,
                 client,
                 brand: 0,
+                is_trash: 0,
                 service: 'youtube',
                 sentiment: {
                     status: false,
