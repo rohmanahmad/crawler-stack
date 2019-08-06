@@ -69,9 +69,9 @@ class twitter extends Core {
                     let  dataValue =  body.split('<li class="js-stream-item stream-item stream-item')
                     const dataTwitter = await this.mapper.mappingDataStreams(dataValue ,project)
                     console.log({maxPosition})
-                    // this.db_adapter.saveStreamToCollection(dataTwitter).then()
+                    this.db_adapter.saveStreamToCollection(dataTwitter).then()
                     if(maxPosition){
-                        // await this.NextPage(project, maxPosition)
+                        await this.NextPage(project, maxPosition)
                     }
                     resolve()
                 } catch (err){
@@ -134,7 +134,7 @@ class twitter extends Core {
                                 console.log(r)
                             }).catch(console.log)
                             if(minPosition){
-                            //    await this.NextPage(project, minPosition)
+                               await this.NextPage(project, minPosition)
                             }
                             resolve()
                         } catch (err) {
