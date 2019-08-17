@@ -2,8 +2,8 @@ const request = require('request')
 const md5 = require('md5')
 const {result, map , each} = require('lodash')
 const {writeFileSync} = require('fs')
-const Core = require('./Libs/youtube/Core')
-const Filter = require('./Libs/StreamFilter')
+const Core = require('../Libs/youtube/Core')
+const Filter = require('../Libs/StreamFilter')
 
 const domain = 'https://www.youtube.com'
 const url = `${domain}/results`
