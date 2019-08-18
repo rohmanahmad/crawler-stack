@@ -61,6 +61,30 @@ StreamsSchema.statics = {
             })
                 // })
         })
+    },
+    saveStreamToCollection: function (streamdata = []) {
+        return new Promise((resolve, reject) => {
+            console.log('save colections')
+            if (streamdata.length <= 0) return resolve()
+            const query = result(streamdata, '[0].query', '')
+            const keyword = result(streamdata, '[0].keyword', '')
+            const logger = `[${keyword}: ${query}]`
+            mongoose.model('Streams')
+                .bulkupsert([
+                    'hashuniqeid',
+                    'keyword',
+                    'client',
+                    'service'
+                ], streamdata)
+                .then((r) => {
+                    console.log(`${logger}: ${result(r, 'result.nUpserted', '')} new record from ${streamdata.length} results`)
+                    resolve(r)
+                })
+                .catch((e) => {
+                    // console.log(e)
+                    reject(e)
+                })
+        })
     }
 }
 

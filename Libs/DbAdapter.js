@@ -5,29 +5,111 @@ const {join} = require('path')
 const {readFileSync, readdirSync} = require('fs')
 const mongoose = require('mongoose')
 const Sequelize = require('sequelize')
+const { getEnv } = require('./Environments')
 
 const mongoModels = join(__dirname, '../Models/Mongodb')
 const mysqlModels = join(__dirname, '../Models/Mysql')
 
-mongoose.connection
-    .on('error', console.log)
-    .on('disconnected', connectMongo)
-    .on('connected', () => console.log('open connection'))
-
-function connectMongo () {
-    return mongoose.connect('mongodb://localhost:27018/ripple10', { keepAlive: 1, useNewUrlParser: true })
+class Adapter {
+    /* 
+    * models (Array)
+    *  - optionals : if not, all models are included
+    */
+    models (models = []) {
+        this.models = models
+        return this
+    }
+    /* 
+    * URI (String)
+    *  - MONGODB_URI_TRENDS
+    *  - MONGODB_URI_RIPPLE10
+    *  - MYSQL_URI_RIPPLE10
+    */
+    setURI (URI = '') {
+        if (URI.length <= 0) throw new Error('URI include db_uri')
+        this.currentURI = getEnv(URI)
+        return this
+    }
+    setup () {
+        if (!this.connectionType) throw new Error('TYPE must "mongo" or "mysql", please add .setConnection([TYPE]) before .setup()')
+        if (!this.currentURI) throw new Error('Invalid CURRENT_URI, please add .setURI([CURRENT_URI]) before .setup()')
+        if (this.connectionType === 'mongo') return this.setupMongoModels()
+        if (this.connectionType === 'mysql') return this.mysqlSetup()
+    }
 }
 
-function connectMysql (models) {
-    console.log('connecting to mysql server...')
-    // mysql://root:punt3n123@localhost:3306/r10
-    const sequel = new Sequelize('mysql://root:punt3n123@localhost:3306/r10')
-    let m = {}
-    readdirSync(mysqlModels)
-        .filter(file => ~file.search(/^[^.].*.js$/))
-        .forEach(file => {
-            const name = file.replace('.js', '')
-            if (models.indexOf(name) > -1) {
+class MongoAdapter extends Adapter {
+    constructor () {
+        super()
+        this.connectionType = 'mongo'
+    }
+
+    checkConnection () {
+        console.log('listening mongo connection')
+        if (mongoose.connection.readyState === 0) this.mongoConnect()
+        mongoose.connection
+            .on('error', (err) => console.error(err))
+            .on('disconnected', e => {
+                console.log('mongo disconnected!')
+                this.mongoConnect()
+            })
+            .on('close', e => {
+                console.log('mongo closed!')
+                this.mongoConnect()
+            })
+            .on('connected', () => console.log('open connection'))
+    }
+
+    mongoConnect () {
+        console.log('connecting to MongoDB server:', this.currentURI)
+        mongoose
+            .connect(this.currentURI, { keepAlive: 1, useNewUrlParser: true })
+            .catch(console.error)
+    }
+
+    setupMongoModels() {
+        console.log('setting up mongodb models')
+        let m = {}
+        readdirSync(mongoModels)
+            .filter(file => ~file.search(/^[^.].*.js$/))
+            .filter(file => {
+                if (this.models.length > 0) {
+                    const filename = file.replace('.js', '')
+                    return this.models.indexOf(filename) > -1
+                }
+                return true
+            })
+            .forEach(file => {
+                require(join(mongoModels, file))
+                const filename = file.replace('.js', '')
+                m[filename] = mongoose.model(filename)
+            })
+        // try connecting to mongodb via mongoosejs
+        this.checkConnection()
+        return m
+    }
+}
+
+class MysqlAdapter extends Adapter {
+    constructor () {
+        super()
+        this.connectionType = 'mysql'
+    }
+    mysqlSetup () {
+        console.log('connecting to mysql server...')
+        const sequel = new Sequelize(getEnv(this.mysqlURI))
+        let m = {}
+        readdirSync(mysqlModels)
+            .filter(file => ~file.search(/^[^.].*.js$/))
+            .filter(file => {
+                if (this.models.length > 0) {
+                    const filename = file.replace('.js', '')
+                    return this.models.indexOf(filename) > -1
+                }
+                return true
+            })
+            .forEach(file => {
+                const name = file.replace('.js', '')
                 const sc = require(join(mysqlModels, file))
                 m[name] = sequel.define(
                     sc.table,
@@ -36,54 +118,9 @@ function connectMysql (models) {
                         timestamps: false,
                         freezeTableName: true // Model tableName will be the same as the model name
                     })
-            }
-        })
-    return m
-}
-
-const adapter = {
-    initMongoModels() {
-        readdirSync(mongoModels)
-            .filter(file => ~file.search(/^[^.].*.js$/))
-            .forEach(file => require(join(mongoModels, file)))
-        // try connecting to mongodb via mongoosejs
-        connectMongo()
-        return this
-    },
-    mongoModels (models = []) {
-        this.mongomodels = []
-        for (const m of models) {
-            this.mongoModels[m] = mongoose.model(m)
-        }
-    },
-    initMysql (models = []) {
-        if (models.length < 1) throw new Error('need models definition atlease 1 model')
-        this.mysqlModel = connectMysql(models)
-    },
-    saveStreamToCollection (streamdata = []) {
-        return new Promise((resolve, reject) => {
-            console.log('save colections')
-            if (streamdata.length <= 0) return resolve()
-            const query = result(streamdata, '[0].query', '')
-            const keyword = result(streamdata, '[0].keyword', '')
-            const logger = `[${keyword}: ${query}]`
-            this.mongoModels.Streams
-                .bulkupsert([
-                    'hashuniqeid',
-                    'keyword',
-                    'client',
-                    'service'
-                ], streamdata)
-                .then((r) => {
-                    console.log(`${logger}: ${result(r, 'result.nUpserted', '')} new record from ${streamdata.length} results`)
-                    resolve(r)
-                })
-                .catch((e) => {
-                    // console.log(e)
-                    reject(e)
-                })
-        })
-    },
+            })
+        return m
+    }
     getClientKeyword (keyids = []) {
         return new Promise((resolve, reject) => {
             this
@@ -100,17 +137,7 @@ const adapter = {
     }
 }
 
-module.exports = adapter
-
-// testing
-// let streams = readFileSync(join(__dirname, '../dummy/streams.json'), {encoding: 'utf-8'})
-// streams = JSON.parse(streams)
-// // connecting and mapping models
-// adapter.initMongoModels().mongoModels(['Streams'])
-// // saving data to collection
-// adapter.saveStreamToCollection(streams)
-// // connecting to mysql server
-// adapter.initMysql()
-// adapter.getClientKeyword([820, 80])
-//     .then(console.log)
-//     .catch(console.error)
+module.exports = {
+    MongoAdapter,
+    MysqlAdapter
+}
