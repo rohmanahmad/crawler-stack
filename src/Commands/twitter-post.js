@@ -1,6 +1,7 @@
 'use strict'
 
-const Core = require('../Libs/twitter/Core')
+require('../App/Bootstrap')
+const Core = use('App/Libs/twitter/Core')
 const request = require('request')
 const {writeFileSync, readFileSync} = require('fs')
 const {result} = require('lodash')
