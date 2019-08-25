@@ -1,12 +1,7 @@
 'use strict'
 
-const { MongoAdapter } = use('Libs/DbAdapter')
-const database = new MongoAdapter()
-    .setURI('MONGODB_URI_TRENDS')
-    .models([
-        'WebMetas'
-    ])
-    .setup()
+const SeoService = use('Services/SeoService')
+const Services = new SeoService()
 
 class Seo {
     constructor () {
@@ -15,10 +10,9 @@ class Seo {
     async handle (req, res, next) {
         try {
             // code here
-            const data = await database.WebMetas.findOne({path: req.originalUrl})
-            console.log(data)
-            req.seo = data
-            console.log('seo handle')
+            if (!req.resources) req.resources = {}
+            const data = await Services.getMetas(req.originalUrl)
+            req.resources['seo'] = data
             next()
         } catch (err) { next(err) }
     }
