@@ -1,36 +1,23 @@
 'use strict'
 
-function getAssets () {
+const AssetsData = use('Data/AssetsData')
+const ComponentsData = use('Data/ComponentsData')
+const ModulesData = use('Data/ModulesData')
+
+function getAssets (route = '/') {
     try {
-        return {
-            theme: 'bracket',
-            css: [
-                '/bootstrap/css/bootstrap.min.css',
-                '/css/bracket.css',
-                '/css/bracket.oreo.min.css',
-                'fontawesome/css/all.min.css',
-                'ionicons/css/ionicons.min.css'
-            ],
-            js: [
-                '/perfect-scrollbar/perfect-scrollbar.min.js',
-                '/jquery/jquery.min.js',
-                '/moment/min/moment.min.js',
-                '/bootstrap/js/bootstrap.min.js',
-                '/scripts/bracket.js'
-            ]
-        }
+        return AssetsData(route)
     } catch (err) { throw err }
 }
 
-function getComponents () {
+function getComponents (route = '/') {
     try {
-        return {
-            logo: true,
-            header: true,
-            leftpanel: true,
-            chats: true
-        }
+        return ComponentsData(route)
     } catch (err) { throw err }
+}
+
+function getModules (route = '/') {
+    return ModulesData(route)
 }
 
 class AssetsManager {
@@ -38,8 +25,9 @@ class AssetsManager {
     handle (req, res, next) {
         try {
             if (!req.resources) req.resources = {}
-            req.resources['assets'] = getAssets()
-            req.resources['components'] = getComponents()
+            req.resources['assets'] = getAssets(req.originalUrl)
+            req.resources['components'] = getComponents(req.originalUrl)
+            req.resources['modules'] = getModules(req.originalUrl)
             next()
         } catch (err) { next(err) }
     }

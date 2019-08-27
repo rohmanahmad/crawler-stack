@@ -1,9 +1,8 @@
 'use strict'
 
+require('../App/Bootstrap')
 const request = require('request')
-// const {writeFileSync} = require('fs')
-// const {join} = require('path')
-const { MongoAdapter, MysqlAdapter } = require('../Libs/DbAdapter')
+const { MongoAdapter, MysqlAdapter } = use('Libs/DbAdapter')
 const trendsUrl = 'https://twitter.com/i/trends'
 
 class TwitterTrends {
