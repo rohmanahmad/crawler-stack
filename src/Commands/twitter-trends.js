@@ -35,7 +35,7 @@ class TwitterTrends {
                             .catch(console.error)
                     }
                 })
-        }, 30 * 1000)
+        }, 5 * 60 * 1000)
     }
 
     getTrends () {
