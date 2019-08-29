@@ -1,8 +1,8 @@
 'use strict'
 
-const TimeConverter = require('./TimeConverter')
+const TimeConverter = require('./Components/TimeConverter')
 const YoutubeComments = require('./YoutubeComments')
-const RequestOptions = require('./RequestOptions')
+const RequestOptions = require('./Components/RequestOptions')
 const DbAdapter = require('../DbAdapter')
 
 class Core {

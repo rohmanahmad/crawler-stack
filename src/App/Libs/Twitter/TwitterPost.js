@@ -1,27 +1,63 @@
 'use strict'
 
-require('../App/Bootstrap')
-const Core = use('Libs/twitter/Core')
+if (typeof use !== 'function') require('../../Bootstrap')
+
 const request = require('request')
-const {writeFileSync, readFileSync} = require('fs')
-const {result} = require('lodash')
+const { result } = require('lodash')
 const domain = 'https://twitter.com'
 const url = `${domain}/search?`
-class twitter extends Core {
-    constructor(){
-        super(Core)
-        this
+
+class TwitterPost {
+    constructor (config = {}) {
+        super()
+
+        this.keyids = config['keyids']
+        this.since = config['since'] ? 'since:' + config['since'] : ''
+        this.until = config['until'] ? 'until:' + config['until'] : ''
+
+        /* this
             .db_adapter
             .initMongoModels()
             .mongoModels(['Streams'])
         // initial mysql connection
         this
             .db_adapter
-            .initMysql(['RippleClientKeyword'])
+            .initMysql(['RippleClientKeyword']) */
+    }
+
+    run () {
+        const keyids = this.keyids.split(',')
+        const ids = keyids.map(x => parseInt(x)).filter(x => x > 0)
+        this.db_adapter.getClientKeyword(ids)
+            .then(async (keywordData) =>{
+                for(const key of keywordData){
+                    const options = key.key_word
+                        .split(',')
+                        .map(x => x.trim())
+                        .filter(x => x.length > 0)
+                        .map(x => ({
+                            keyword: x,
+                            qsearch: [
+                                x,
+                                this.since,
+                                this.until
+                            ].join(' '),
+                            keyid: key.keyId,
+                            client: key.clientId,
+                            include: key.KeyInclude,
+                            exclude: key.KeyExclude
+                        }))
+                    for(const opt of options){
+                        console.log(opt)
+                        await this.doSearching(opt)
+                    }
+                }
+                process.exit(0)
+            })
+            .catch(console.error)
     }
 
     options (maxPosition = '' , qsearch = '', value = ''){
-        
         const options = { 
             method: 'GET',
             url: 'https://twitter.com/i/search/timeline',
@@ -48,7 +84,7 @@ class twitter extends Core {
         return options
     }
 
-    NextPage (project = {} , minPosition = '') {
+    nextPage (project = {} , minPosition = '') {
         return new Promise((resolve, reject) => {
             console.log('getting Next Post...')
             const {keyword : qsearch, keyid, client, include, exclude} = project
@@ -72,7 +108,7 @@ class twitter extends Core {
                     console.log({maxPosition})
                     this.db_adapter.saveStreamToCollection(dataTwitter).then()
                     if(maxPosition){
-                        await this.NextPage(project, maxPosition)
+                        await this.nextPage(project, maxPosition)
                     }
                     resolve()
                 } catch (err){
@@ -135,7 +171,7 @@ class twitter extends Core {
                                 console.log(r)
                             }).catch(console.log)
                             if(minPosition){
-                               await this.NextPage(project, minPosition)
+                               await this.nextPage(project, minPosition)
                             }
                             resolve()
                         } catch (err) {
@@ -147,45 +183,15 @@ class twitter extends Core {
         })
     }
 
-    start () {
-        const keyids = this.keyids.split(',')
-        const ids = keyids.map(x => parseInt(x)).filter(x => x > 0)
-        this.db_adapter.getClientKeyword(ids)
-            .then(async (keywordData) =>{
-                for(const key of keywordData){
-                    const options = key.key_word
-                        .split(',')
-                        .map(x => x.trim())
-                        .filter(x => x.length > 0)
-                        .map(x => ({
-                            keyword: x,
-                            qsearch: [
-                                x,
-                                this.since,
-                                this.until
-                            ].join(' '),
-                            keyid: key.keyId,
-                            client: key.clientId,
-                            include: key.KeyInclude,
-                            exclude: key.KeyExclude
-                        }))
-                    for(const opt of options){
-                        console.log(opt)
-                        await this.doSearching(opt)
-                    }
-                }
-                process.exit(0)
-            })
-            .catch(console.error)
-    }
-
-    setQuery(rootConfig = {}) {
-        this.keyids = rootConfig['keyids']
-        this.since = rootConfig['since'] ? 'since:' + rootConfig['since'] : ''
-        this.until = rootConfig['until'] ? 'until:' + rootConfig['until'] : ''
+    setQuery(config = {}) {
+        this.keyids = config['keyids']
+        this.since = config['since'] ? 'since:' + config['since'] : ''
+        this.until = config['until'] ? 'until:' + config['until'] : ''
         return this
     }
 }
+
+module.exports = TwitterPost
 
 new twitter().setQuery({
     keyids: '55',
