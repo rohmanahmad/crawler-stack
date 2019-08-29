@@ -1,9 +1,8 @@
 'use strict'
 
-const {result} = require('lodash')
+const { result } = require('./node_modules/lodash')
 const Filter = require('../StreamFilter')
-const md5 = require('md5')
-const {writeFile} = require('fs')
+const md5 = require('./node_modules/md5')
 
 const domain = 'https://twitter.com'
 

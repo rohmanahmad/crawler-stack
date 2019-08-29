@@ -1,6 +1,6 @@
 'use strict'
 
-require('../App/Bootstrap')
+require('../../Bootstrap')
 const request = require('request')
 const md5 = require('md5')
 const {result, map , each} = require('lodash')

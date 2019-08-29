@@ -1,10 +1,10 @@
 'use strict'
 
 const {writeFileSync} = require('fs')
-const request = require('request')
-const md5 = require('md5')
-const { map, result } = require('lodash')
-const { getReqOptions } = require('./RequestOptions')
+const request = require('./node_modules/request')
+const md5 = require('./node_modules/md5')
+const { map, result } = require('./node_modules/lodash')
+const { getReqOptions } = require('./Components/RequestOptions')
 const domain = 'https://www.youtube.com'
 const apiurl = 'https://www.googleapis.com/youtube/v3/commentThreads'
 const tokenlist = [

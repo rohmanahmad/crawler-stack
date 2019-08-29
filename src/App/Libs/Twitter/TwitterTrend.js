@@ -1,41 +1,21 @@
 'use strict'
 
-require('../App/Bootstrap')
+if (typeof use !== 'function') require('../../Bootstrap')
+
 const request = require('request')
-const { MongoAdapter, MysqlAdapter } = use('Libs/DbAdapter')
 const trendsUrl = 'https://twitter.com/i/trends'
 
 class TwitterTrends {
-    constructor () {
-        this.db = new MongoAdapter()
-            .setURI('MONGODB_URI_TRENDS')
-            .models([
-                'TwitterTrends'
-            ])
-            .setup()
-    }
+    constructor () { }
 
     run () {
-        console.log('running')
-        this.getTrends()
-                .then((data) => {
-                    for (const row of data) {
-                        this.db.TwitterTrends.create(row)
-                            .then(console.log)
-                            .catch(console.error)
-                    }
-                })
-        setInterval(() => {
-            console.log('run...')
-            this.getTrends()
-                .then((data) => {
-                    for (const row of data) {
-                        this.db.TwitterTrends.create(row)
-                            .then(console.log)
-                            .catch(console.error)
-                    }
-                })
-        }, 5 * 60 * 1000)
+        return new Promise((resolve, reject) => {
+            console.log('running')
+            this
+                .getTrends()
+                .then(resolve)
+                .catch(reject)
+        })
     }
 
     getTrends () {
@@ -93,4 +73,4 @@ class TwitterTrends {
     }
 }
 
-new TwitterTrends().run()
+module.exports = TwitterTrends
