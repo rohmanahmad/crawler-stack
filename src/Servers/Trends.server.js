@@ -36,6 +36,7 @@ const SeoMiddleware = use('Middlewares/Seo')
 app.use(AssetsManager)
 app.get(['/'], [SeoMiddleware], SocialController.index)
 app.get(['/dashboard'], [SeoMiddleware], SocialController.dashboard)
+app.get(['/trendings'], [SeoMiddleware], SocialController.trendings)
 
 app.listen(3000)
 

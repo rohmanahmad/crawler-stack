@@ -1,32 +1,40 @@
 <div class="br-header">
     <div class="br-header-left">
         if components.leftpanel
-            <div class="navicon-left hidden-md-down"><a id="btnLeftMenu" href=""><i class="icon ion-navicon-round"></i></a></div>
-            <div class="navicon-left hidden-lg-up"><a id="btnLeftMenuMobile" href=""><i class="icon ion-navicon-round"></i></a></div>
+            <div class="navicon-left hidden-md-down">
+                <a id="btnLeftMenu" href="">
+                    <i class="icon ion-navicon-round"></i>
+                </a>
+            </div>
+            <div class="navicon-left hidden-lg-up">
+                <a id="btnLeftMenuMobile" href="">
+                    <i class="icon ion-navicon-round"></i>
+                </a>
+            </div>
         <div class="input-group hidden-xs-down wd-170 transition">
+        if components.header.search
             <input id="searchbox" type="text" class="form-control" placeholder="Search">
             <span class="input-group-btn">
-                <button class="btn btn-secondary" type="button"><i class="fa fa-search"></i></button>
+                <button class="btn btn-secondary" type="button">
+                    <i class="fa fa-search"></i>
+                </button>
             </span>
         </div>
     </div>
     <div class="br-header-right">
+    if components.header.account
         <nav class="nav">
             <div class="dropdown">
                 <a href="" class="nav-link pd-x-7 pos-relative" data-toggle="dropdown">
                     <i class="icon ion-ios-email-outline tx-24"></i>
-                    
                     <span class="square-8 bg-danger pos-absolute t-15 r-0 rounded-circle"></span>
-                
                 </a>
                 <div class="dropdown-menu dropdown-menu-header">
                     <div class="dropdown-menu-label">
                         <label>Messages</label>
                         <a href="">+ Add New Message</a>
                     </div>
-
                     <div class="media-list">
-                        
                         <a href="" class="media-list-link">
                         <div class="media">
                             <img src="https://via.placeholder.com/500" alt="">
@@ -170,7 +178,9 @@
                 </div>
             </div>
         </nav>
-        if components.chats
+    if components.header.rightnav
+        include rightnav
+        if components.header.chats
             <div class="navicon-right">
                 <a id="btnRightMenu" href="" class="pos-relative">
                     <i class="icon ion-ios-chatboxes-outline"></i>

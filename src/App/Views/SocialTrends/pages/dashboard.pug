@@ -1,7 +1,9 @@
-<!DOCTYPE html>
-html(lang="en")
-    head
-        include ../components/seo
-        title= (seo.title || '-') + ' | Social Trends'
-    body
-        include ../components/header.pug
+extends ../layout-admin
+
+block content
+    .br-mainpanel(style="position: relative;")
+
+        if components.body.title
+            include ../components/body-title
+        .br-pagebody.pd-x-20.pd-sm-x-30
+            p hello
