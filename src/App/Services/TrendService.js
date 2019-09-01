@@ -28,7 +28,7 @@ class TrendService {
             let since = new Date(moment().format('YYYY-MM-DD 00:00:00'))
             let until = new Date(moment().format('YYYY-MM-DD 23:59:59'))
             if (typeof q === 'object') {
-                since = q['since'] ? new Date(q['since'] + ' 00:00:00') : new Date(moment().subtract(3, 'h').format('YYYY-MM-DD HH:mm:00'))
+                since = q['since'] ? new Date(q['since'] + ' 00:00:00') : new Date(moment().subtract(2, 'h').format('YYYY-MM-DD HH:mm:00'))
                 until = q['until'] ? new Date(q['until'] + ' 23:59:59') : new Date(moment().format('YYYY-MM-DD HH:mm:00'))
             }
             let criteria = {
