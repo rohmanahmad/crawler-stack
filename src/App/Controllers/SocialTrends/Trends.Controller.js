@@ -17,9 +17,9 @@ class TrendsController {
 
     async trendings (req, res, next) {
         try {
-            const {seo, assets, components} = req.resources
-            const data = await trendService.getAllTrends(req.query)
-            res.render('pages/trendings', {seo, data, assets, components})
+            const {seo, assets, components, modules} = req.resources
+            const data = await trendService.getAllTrendsData(req.query)
+            res.render('pages/trendings', {seo, data, assets, modules, components})
         } catch (err) {
             next(err)
         }

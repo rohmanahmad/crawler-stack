@@ -23,6 +23,20 @@ AssetsData['default'] = {
     js: jsBracketDefault
 }
 
+AssetsData['/trendings'] = {
+    theme: 'bracket',
+    css: [
+        ...cssBracketDefault,
+        // '/morris.js/morris.css',
+        '/chartjs/Chart.min.css'
+    ],
+    js: [
+        ...jsBracketDefault,
+        // '/morris.js/morris.min.js',
+        '/chartjs/Chart.bundle.min.js'
+    ]
+}
+
 module.exports = function (route = '') {
     const assets = AssetsData[route] || AssetsData['default']
     return assets
