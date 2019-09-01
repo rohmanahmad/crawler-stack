@@ -109,7 +109,7 @@ class TrendService {
                 }
                 items.push(res)
             }
-            labels = labels.map(x => moment(x).format('YYYY-MM-DD HH:mm:00'))
+            labels = labels.map(x => moment(x).format('YYYY-MMM-DD HH:mm:00'))
             return {items, labels}
         } catch (err) { throw err }
     }
