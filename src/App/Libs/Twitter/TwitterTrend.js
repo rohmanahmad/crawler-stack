@@ -36,6 +36,7 @@ class TwitterTrends {
                         .replace(/ +/g, ' ')
                     const list = html.match(/<ul class="trend-items js-trends">(.*?)<\/ul>/)[0]
                     const allList = list.match(/<li(.*?)<\/li>/g)
+                    let position = 1
                     for (const l of allList) {
                         const text = l.match(/data-trend-name="(.*?)"/)[1]
                         const id = l.match(/data-trends-id="(.*?)"/)[1]
@@ -53,11 +54,19 @@ class TwitterTrends {
                         if (isKoma) tweets = tweets / 100
                         data.push({
                             source: 'twitter',
+                            position,
                             date: new Date(),
                             tren_id: id,
                             text,
                             post: {
-                                count: tweets || 0
+                                count: tweets || 0,
+                                images: [],
+                                link: '',
+                                description: '',
+                                published_at: new Date(),
+                                likes: 0,
+                                views: 0,
+                                shares: 0
                             },
                             raw: {
                                 token,
@@ -65,6 +74,7 @@ class TwitterTrends {
                                 countText: totalTweet.trim()
                             }
                         })
+                        position += 1
                     }
                     resolve(data)
                 }
