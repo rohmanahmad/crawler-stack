@@ -1,0 +1,68 @@
+<div class="row row-sm mg-t-20">
+    <div class="col-lg-12">
+        <div class="card bd-gray-400">
+            <div class="d-md-flex justify-content-between pd-25">
+                <div>
+                    <h6 class="tx-13 tx-uppercase tx-inverse tx-semibold tx-spacing-1">Twitter Trends</h6>
+                    <p>From : Jul 12, 2019 - Jun 01, 2019</p>
+                </div>
+                <div class="d-sm-flex">
+                    <div>
+                        <p class="mg-b-5 tx-uppercase tx-10 tx-mont tx-semibold">Trending Post</p>
+                        <h4 class="tx-lato tx-inverse tx-bold mg-b-0">#twitterforall</h4>
+                        <span class="tx-12 tx-success tx-roboto">From all</span>
+                    </div>
+                    <div class="bd-sm-l pd-sm-l-20 mg-sm-l-20 mg-t-20 mg-sm-t-0">
+                        <p class="mg-b-5 tx-uppercase tx-10 tx-mont tx-semibold">Posts</p>
+                        <h4 class="tx-lato tx-inverse tx-bold mg-b-0">38K</h4>
+                        <span class="tx-12 tx-danger tx-roboto">4.65% decreased</span>
+                    </div>
+                    <div class="bd-sm-l pd-sm-l-20 mg-sm-l-20 mg-t-20 mg-sm-t-0">
+                        <p class="mg-b-5 tx-uppercase tx-10 tx-mont tx-semibold">Post Likes</p>
+                        <h4 class="tx-lato tx-inverse tx-bold mg-b-0">583K</h4>
+                        <span class="tx-12 tx-success tx-roboto">1.22% increased</span>
+                    </div>
+                </div><!-- d-flex -->
+            </div><!-- d-flex -->
+
+            <div class="pd-l-25 pd-r-15 pd-b-25">
+                <canvas id="ch5" class="ht-250 ht-sm-300" style="padding: 0px; position: relative;">
+                    //- charts
+                </canvas>
+            </div>
+        </div><!-- card -->
+    </div><!-- col-8 -->
+</div>
+<div class="row row-sm mg-t-20">
+    <div class="col-lg-4 mg-t-20 mg-lg-t-0">
+        <div class="card bd-gray-400">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                <h6 class="card-title tx-uppercase tx-12 mg-b-0">Top Trending By Post</h6>
+                <span class="tx-12 tx-uppercase">March 2017</span>
+            </div><!-- card-header -->
+            <div class="card-body">
+                - var list1 = { name: 'hash1', title: '#hutri47', value: { posts: '40K', percent: 70 } }
+                - var list2 = { name: 'hash2', title: '#indonesiaRaya47', value: { posts: '32K', percent: 50 } }
+                - var list3 = { name: 'hash3', title: '#jurik123', value: { posts: '22K', percent: 40 } }
+                - var list4 = { name: 'hash4', title: '#bebelak123', value: { posts: '21K', percent: 35 } }
+                - var list5 = { name: 'hash5', title: '#sitomang2', value: { posts: '19K', percent: 30 } }
+                - var list6 = { name: 'hash6', title: '#babakuk', value: { posts: '5K', percent: 20 } }
+                - var list7 = { name: 'hash7', title: '#indomie', value: { posts: '4K', percent: 18 } }
+                - var list8 = { name: 'hash8', title: '#bodoamat', value: { posts: '3K', percent: 16 } }
+                - var list9 = { name: 'hash9', title: '#borwe', value: { posts: '2K', percent: 14 } }
+                - var list10 = { name: 'hash10', title: '#bukng', value: { posts: '1K', percent: 10 } }
+                - var list = [ list1, list2, list3, list4, list5, list6, list7, list8, list9, list10 ]
+                each item, index in list
+                    <div class="row align-items-center">
+                        <div class="col-5 tx-12 tx-bold">#{ index + 1 }. - #{ item.title }</div><!-- col-3 -->
+                        <div class="col-7">
+                            <div class="progress rounded-0 mg-b-15">
+                                <div class="progress-bar bg-teal wd-#{item.value.percent}p lh-3" role="progressbar" aria-valuenow="#{item.value.percent}" aria-valuemin="0" aria-valuemax="100"> #{item.value.posts} </div>
+                            </div><!-- progress -->
+                        </div><!-- col-9 -->
+                    </div><!-- row -->
+                <p class="tx-11 mg-b-0 mg-t-30">Notice: Lorem ipsum dolor sit amet.</p>
+            </div><!-- card-body -->
+        </div>
+    </div><!-- col-4 -->
+</div>

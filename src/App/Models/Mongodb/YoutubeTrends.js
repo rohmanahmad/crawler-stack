@@ -52,4 +52,4 @@ CurrentSchema.statics = {
     }
 }
 
-mongoose.model('TwitterTrends', CurrentSchema, 'trends_data')
+mongoose.model('YoutubeTrends', CurrentSchema, 'trends_data')

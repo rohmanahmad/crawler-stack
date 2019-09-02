@@ -4,13 +4,15 @@ if (typeof use !== 'function') require('../App/Bootstrap')
 
 const { MongoAdapter } = use('Libs/DbAdapter')
 const TwitterTrend = use('Libs/Twitter/TwitterTrend')
+const YoutubeTrend = use('Libs/Youtube/YoutubeTrend')
 
 class Trends {
     constructor () {
         this.db = new MongoAdapter()
             .setURI('MONGODB_URI_TRENDS')
             .models([
-                'TwitterTrends'
+                'TwitterTrends',
+                'YoutubeTrends'
             ])
             .setup()
     }
@@ -24,7 +26,20 @@ class Trends {
                     .TwitterTrends
                     .create(row)
             }
-            console.log(`Finish crawl #${nloop}`)
+            console.log(`[twitter] Finish crawl #${nloop}`)
+        } catch (err) { throw err }
+    }
+
+    async startYoutube (nloop = 0) {
+        try {
+            const ytTrends = new YoutubeTrend()
+            const data = await ytTrends.run()
+            for (const row of data) {
+                await this.db
+                    .YoutubeTrends
+                    .create(row)
+            }
+            console.log(`[youtube] Finish crawl #${nloop}`)
         } catch (err) { throw err }
     }
 
@@ -42,6 +57,8 @@ class Trends {
     startOnce () {
         try {
             this.startTwitter()
+                .catch(console.error)
+            this.startYoutube()
                 .catch(console.error)
             return this
         } catch (err) {

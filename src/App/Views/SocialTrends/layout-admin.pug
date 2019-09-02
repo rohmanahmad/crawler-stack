@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+html(lang="en")
+    head
+        include components/seo
+        title= (seo && seo.title || '-') + ' | Social Trends'
+        - var cssItems = assets['css'] || []
+
+        each css in cssItems
+            link(rel="stylesheet", href=css)
+
+        - var jsItems = assets['js'] || []
+        each js in jsItems
+            script(src=js)
+    body
+        if components.logo
+            <div class="br-logo">
+                <a href="">
+                    <span>[</span>Social <i>Trends</i><span>]</span>
+                </a>
+            </div>
+
+        if components.leftpanel
+            include components/leftpanel
+
+        if components.header.main
+            include components/header
+
+        if components.header.chats
+            include components/chats
+
+        //- all block content
+        block content
+    script.
+        const twitterData = !{JSON.stringify(data)}
+    - var mdls = modules || []
+    each m in mdls
+        script(src=m)
