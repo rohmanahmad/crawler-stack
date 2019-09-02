@@ -48,6 +48,7 @@ class Trends {
         setInterval(async () => {
             try {
                 await this.startTwitter(nloop++)
+                await this.startYoutube(nloop++)
             } catch (err) {
                 console.log(err)
             }
@@ -69,4 +70,4 @@ class Trends {
 
 new Trends()
     .startOnce()
-    .startWithTimer(parseInt(process.env.TRENDS_LOOP_INTERVAL || 5 * 60))
+    .startWithTimer(parseInt(process.env.TRENDS_LOOP_INTERVAL || 15 * 60))
