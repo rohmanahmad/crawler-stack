@@ -2,7 +2,12 @@ extends ../layout-admin
 
 block content
     .br-mainpanel(style="position: relative; margin-left: 0px; padding: 10px;")
-        include ../components/landingpage/component1
-        include ../components/landingpage/component2
-        include ../components/landingpage/component3
+        include ../components/landingpage/top-summaries
+        include ../components/landingpage/twitter-chart
+        include ../components/landingpage/youtube-chart
         include ../components/landingpage/component4
+    
+    script.
+        const jsonData = !{JSON.stringify(data)}
+        const twitterData = jsonData['twitter'] || []
+        const youtubeData = jsonData['youtube'] || []

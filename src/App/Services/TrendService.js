@@ -8,7 +8,8 @@ const { MongoAdapter } = use('Libs/DbAdapter')
 const database = new MongoAdapter()
     .setURI('MONGODB_URI_TRENDS')
     .models([
-        'TwitterTrends'
+        'TwitterTrends',
+        'YoutubeTrends'
     ])
     .setup()
 
@@ -23,15 +24,16 @@ const colours = [
 class TrendService {
     constructor () {}
 
-    async getAllTrendsData (q) {
+    async getTwitterTrends (q) {
         try {
-            let since = new Date(moment().format('YYYY-MM-DD 00:00:00'))
-            let until = new Date(moment().format('YYYY-MM-DD 23:59:59'))
+            let since = new Date(moment().subtract(2, 'h').format('YYYY-MM-DD HH:mm:00'))
+            let until = new Date(moment().format('YYYY-MM-DD HH:mm:00'))
             if (typeof q === 'object') {
-                since = q['since'] ? new Date(q['since'] + ' 00:00:00') : new Date(moment().subtract(2, 'h').format('YYYY-MM-DD HH:mm:00'))
-                until = q['until'] ? new Date(q['until'] + ' 23:59:59') : new Date(moment().format('YYYY-MM-DD HH:mm:00'))
+                since = q['since'] ? new Date(q['since'] + ' 00:00:00') : since
+                until = q['until'] ? new Date(q['until'] + ' 23:59:59') : until
             }
             let criteria = {
+                source: 'twitter',
                 date: {
                     $gte: since,
                     $lte: until
@@ -110,6 +112,108 @@ class TrendService {
                 items.push(res)
             }
             labels = labels.map(x => moment(x).format('YYYY-MMM-DD HH:mm:00'))
+            return {items, labels}
+        } catch (err) { throw err }
+    }
+
+    async getYoutubeTrends (q) {
+        try {
+            let since = new Date(moment().subtract(7, 'd').format('YYYY-MM-DD HH:mm:00'))
+            let until = new Date(moment().format('YYYY-MM-DD HH:mm:00'))
+            if (typeof q === 'object') {
+                since = q['since'] ? new Date(q['since'] + ' 00:00:00') : since
+                until = q['until'] ? new Date(q['until'] + ' 23:59:59') : until
+            }
+            let criteria = {
+                source: 'youtube',
+                'position': {
+                    $lte: 10
+                },
+                date: {
+                    $gte: since,
+                    $lte: until
+                }
+            }
+            const aggregate = [
+                {
+                    $match: criteria
+                },
+                {
+                    $group: {
+                        _id: {
+                            source: '$source',
+                            text: '$text'
+                        },
+                        items: {
+                            $addToSet: {
+                                count: '$post.views',
+                                date: '$date'
+                            }
+                        }
+                    }
+                }
+            ]
+            const allTrends = await database.YoutubeTrends
+                .aggregate(aggregate)
+            let items = []
+            let labels = []
+            // getting labels
+            for (let i in allTrends) {
+                // console.log(allTrends[i]['items'])
+                const tren = allTrends[i]
+                let ambil = 1
+                for (const index in tren.items) {
+                    const xd = tren.items[index]
+                    const date = moment(xd.date).format('YYYY-MM-DD HH:00:00')
+                    labels.push(date)
+                    ambil += 1
+                }
+            }
+            labels = labels.sort().map(x => `${x}`)
+            labels = uniq(labels)
+            for (let i in allTrends) {
+                // if (parseInt(i) > 0) {
+                    const tren = allTrends[i]
+                    let xdata = []
+                    const text = tren['_id']['text']
+                    if (text) {
+                        let ambil = 1
+                        for (const index in tren.items) {
+                            // if (ambil <= 10) {
+                                const xd = tren.items[index]
+                                const date = moment(xd.date).format('YYYY-MM-DD HH:00:00')
+                                for (const l of labels) {
+                                    let item = {}
+                                    // console.log(`${date}`, l, `${date}` === l)
+                                    if (`${date}` === l) {
+                                        item = {
+                                            t: new Date(l),
+                                            y: xd.count / (1000 * 1000)
+                                        }
+                                    } else {
+                                        item = {
+                                            t: l,
+                                            y: 0
+                                        }
+                                    }
+                                    xdata.push(item)
+                                }
+                                ambil += 1
+                            // }
+                        }
+                    }
+                    const res = {
+                        label: text,
+                        fill: false,
+                        borderColor: colours[parseInt(i)],
+                        pointBackgroundColor: colours[parseInt(i)],
+                        backgroundColor: colours[parseInt(i)],
+                        data: xdata
+                    }
+                    items.push(res)
+                // }
+            }
+            labels = labels.map(x => moment(x).format('YYYY-MMM-DD HH:00:00'))
             return {items, labels}
         } catch (err) { throw err }
     }
