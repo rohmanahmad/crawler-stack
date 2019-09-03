@@ -9,9 +9,10 @@ class TrendsController {
 
     async index (req, res, next) {
         try {
-            const {seo, assets, components} = req.resources
-            const data = await trendService.getAllTrends(req.query)
-            res.render('pages/landingpage', {seo, data, assets, components})
+            // const {seo, assets, components} = req.resources
+            // const data = await trendService.getAllTrendsData(req.query)
+            // res.render('pages/landingpage', {seo, data, assets, components})
+            res.redirect('/trendings')
         } catch (err) { next(err) }
     }
 
@@ -27,9 +28,10 @@ class TrendsController {
 
     async dashboard (req, res, next) {
         try {
-            const {seo, assets, components} = req.resources
-            const data = await trendService.getAllTrends(req.query)
-            res.render('pages/dashboard', {seo, data, assets, components})
+            res.redirect('/trendings')            
+            // const {seo, assets, components} = req.resources
+            // const data = await trendService.getAllTrends(req.query)
+            // res.render('pages/dashboard', {seo, data, assets, components})
         } catch (err) {
             next(err)
         }
