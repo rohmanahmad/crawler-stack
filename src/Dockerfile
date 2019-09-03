@@ -2,6 +2,10 @@ FROM node:12.9.0
 
 WORKDIR /usr/src/app
 
-COPY . .
+COPY App .
+COPY Servers .
+COPY package.json .
 
-RUN npm i
+RUN "/bin/npm i"
+
+CMD ["npm", "run", "dev"]

@@ -1,5 +1,7 @@
 'use strict'
 
+require('dotenv').config()
+
 global.use = function (dep) {
     try {
         if (!dep || (dep && dep.length === 0)) throw new Error('Invalid Dependency')
