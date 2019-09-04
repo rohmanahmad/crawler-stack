@@ -5,6 +5,7 @@ if (typeof use !== 'function') require('../App/Bootstrap')
 const { MongoAdapter } = use('Libs/DbAdapter')
 const TwitterTrend = use('Libs/Twitter/TwitterTrend')
 const YoutubeTrend = use('Libs/Youtube/YoutubeTrend')
+const GoogleTrend = use('Libs/Google/GoogleTrend')
 
 class Trends {
     constructor () {
@@ -12,7 +13,8 @@ class Trends {
             .setURI('MONGODB_URI_TRENDS')
             .models([
                 'TwitterTrends',
-                'YoutubeTrends'
+                'YoutubeTrends',
+                'GoogleTrends'
             ])
             .setup()
     }
@@ -43,6 +45,22 @@ class Trends {
         } catch (err) { throw err }
     }
 
+    async startGoogle (nloop = 0) {
+        try {
+            const ggTrends = new GoogleTrend()
+            const data = await ggTrends.run()
+            if (data) {
+                for (const row of data) {
+                    console.log(row)
+                    // await this.db
+                    //     .GoogleTrends
+                    //     .create(row)
+                }
+            }
+            console.log(`[google] Finish crawl #${nloop}`)
+        } catch (err) { throw err }
+    }
+
     startWithTimer (time = 60, nloop = 1) {
         console.log('start with timer', time, 's')
         setInterval(async () => {
@@ -57,9 +75,14 @@ class Trends {
 
     startOnce () {
         try {
-            this.startTwitter()
-                .catch(console.error)
-            this.startYoutube()
+            // this.startTwitter()
+            //     .catch(console.error)
+            // this.startYoutube()
+            //     .catch(console.error)
+            this.startGoogle({
+                date: new Date(),
+                geo: 'ID'
+            })
                 .catch(console.error)
             return this
         } catch (err) {
