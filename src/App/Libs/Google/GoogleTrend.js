@@ -54,11 +54,16 @@ class GoogleTrends {
                     result(d, 'date', '').substr(4, 2),
                     result(d, 'date', '').substr(6, 10)
                 ]
-                const date = new Date(dateArr.join('-'), ' 00:00:00')
+                const date = new Date(dateArr.join('-') + ' 00:00:00')
                 if (trendSearch && trendSearch.length > 0) {
                     for (const ts of trendSearch) {
                         const title = result(ts, 'title.query', '')
-                        const total = result(ts, 'formattedTraffic', '0')
+                        let total = result(ts, 'formattedTraffic', '0').replace('+', '')
+                        if (total.indexOf('K') > -1) {
+                            total = parseFloat(total) * 1000
+                        } else if (total.indexOf('M') > -1) {
+                            total = parseFloat(total) * 1000 * 1000
+                        }
                         const image = result(ts, 'image.imageUrl', '')
                         const exploreLink = result(ts, 'title.exploreLink', '')
                         const source = result(ts, 'shareUrl', '')
