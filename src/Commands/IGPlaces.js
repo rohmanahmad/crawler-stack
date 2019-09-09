@@ -69,7 +69,7 @@ class IGPlace {
                 .setCity(cityId)
                 .setPage(0)
                 .getPlacesByCity()
-            const lastPage = 0
+            let lastPage = 0
             while (nPage) {
                 try {
                     await this.updateIgPlace(cityId, locList)
