@@ -1,31 +1,30 @@
 'use strict'
 
 const Request = require('request')
-const locURL = 'https://www.instagram.com/explore/locations/<location>/?__a=1&page=<page>'
+const countryURL = 'https://www.instagram.com/explore/locations/?__a=1&page=<page>'
+const cityURL = 'https://www.instagram.com/explore/locations/<country>/?__a=1&page=<page>'
 
 class IGLocations {
-    constructor (config = {}) {
-        const {location, page} = config
-        if (!location || parseInt(page) < 0) throw 'Invalid Input'
-        this.location = location
-        this.page = page
-    }
+    constructor () { }
     setPage (page = 0) {
         this.page = page
         return this
     }
-    setLocation (location = 'ID') {
-        this.location = location
+    setCountry (country = 'ID') {
+        this.country = country
         return this
     }
-    getLocation () {
+    setCity (city = '') {
+        this.city = city
+        return this
+    }
+    getCountries () {
         return new Promise((resolve, reject) => {
             try {
-                if (!this.location || parseInt(this.page) < 0) throw 'Invalid Input'
-                const url = locURL
-                    .replace('<location>', this.location || 'ID')
-                    .replace('<page>', this.page || 0)
-                console.log(url)
+                if (parseInt(this.page) < 0) throw 'Invalid Input'
+                const url = countryURL
+                    .replace('<page>', this.page || 1)
+                console.log('[GET]', url)
                 Request
                     .get(url, (err, res, body) => {
                         if (err) {
@@ -35,7 +34,28 @@ class IGLocations {
                         }
                     })
             } catch (err) {
-                throw err
+                reject(err)
+            }
+        })
+    }
+    getCities () {
+        return new Promise((resolve, reject) => {
+            try {
+                if (!this.country || parseInt(this.page) < 0) throw 'Invalid Input'
+                const url = cityURL
+                    .replace('<country>', this.country || 'ID')
+                    .replace('<page>', this.page || 0)
+                console.log('[GET]', this.country, ':', url)
+                Request
+                    .get(url, (err, res, body) => {
+                        if (err) {
+                            reject(err)
+                        } else {
+                            resolve(body)
+                        }
+                    })
+            } catch (err) {
+                reject(err)
             }
         })
     }
