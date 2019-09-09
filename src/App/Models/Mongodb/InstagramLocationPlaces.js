@@ -6,20 +6,12 @@ const {result, transform} = require('lodash')
 const Schema = mongoose.Schema
 
 const MySchema = new Schema({
-    country_info: {
-        id: String,
-        name: String,
-        slug: String
-    },
     city_id: String,
+    place_id: String,
+    place_name: String,
+    place_slug: String,
     created_at: Date,
-    updated_at: Date,
-    city_name: String,
-    city_slug: String,
-    last_crawled: {
-        page: Number,
-        at: Date
-    }
+    updated_at: Date
 })
 
 MySchema.statics = {
@@ -53,4 +45,4 @@ MySchema.statics = {
     }
 }
 
-mongoose.model('InstagramLocationCities', MySchema, 'ig_location_city')
+mongoose.model('InstagramLocationPlaces', MySchema, 'ig_location_places')
