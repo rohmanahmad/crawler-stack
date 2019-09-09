@@ -27,7 +27,7 @@ class IGPlace {
             let {next, items} = await this.getLocations()
             await this.loopingLocations(items)
             while (next) {
-                const x = await this.getLocations(next)
+                const x = await this.getLocations()
                 next = x.next
                 await this.loopingLocations(x.items)
             }
@@ -51,7 +51,7 @@ class IGPlace {
             const query = await this.db
                 .InstagramLocationCities
                 .find({
-                    crawled: {$ne: true}
+                    'last_crawled.at': {$exists: false}
                 })
                 .skip(start)
                 .limit(limit)
@@ -69,6 +69,7 @@ class IGPlace {
                 .setCity(cityId)
                 .setPage(0)
                 .getPlacesByCity()
+            let lastPage = 0
             while (nPage) {
                 try {
                     await this.updateIgPlace(cityId, locList)
@@ -77,14 +78,15 @@ class IGPlace {
                         .setPage(nPage)
                         .setCity(cityId)
                         .getPlacesByCity(cityId)
+                    if (pc.next_page === null) lastPage = nPage
                     nPage = pc.next_page
                     locList = pc.location_list
                 } catch (err) {
                     console.log(err)
-                    locList = pc.location_list
+                    locList = []
                 }
             }
-            await this.updateLastCrawled(cityId, nPage)
+            await this.updateLastCrawled(cityId, lastPage)
             console.log(`[${cityId}]:`, 'ig place done')
         } catch (err) {
             console.log(err)
@@ -92,8 +94,9 @@ class IGPlace {
     }
     async updateIgPlace (cityId, data) {
         try {
+            if (!data || (data && data.length <= 0)) return false
             for (let x of data) {
-                const o = await this.db
+                await this.db
                     .InstagramLocationPlaces
                     .updateOne(
                         {
@@ -119,7 +122,7 @@ class IGPlace {
     }
     async updateLastCrawled (cityId, curPage) {
         try {
-            this.db
+            await this.db
                 .InstagramLocationCities
                 .updateOne(
                     {'city_id': cityId},
