@@ -3,6 +3,7 @@
 if (typeof use !== 'function') require('../App/Bootstrap')
 
 const IGPrf = use('Services/IGProfiles')
+const { result } = require('lodash')
 const { MongoAdapter } = use('Libs/DbAdapter')
 const L1 = 99
 const L2 = 9
@@ -79,6 +80,65 @@ class IGProfiles {
             }
         } catch (err) { throw err }
     }
+    async profileDetail () {
+        try {
+            let users = await this.db.InstagramProfiles.find({'last_crawled.at': null}).limit(100)
+            let hasNext = (users.length === 100)
+            while (hasNext) {
+                for (let user of users) {
+                    try {
+                        const username = result(user, 'profile.username')
+                        const raw = await this.getDetail(username)
+                        await this.updateProfile(raw, username)
+                        await sleep(5)
+                    } catch (err) {
+                        console.log(err)
+                    }
+                }
+                users = await this.db.InstagramProfiles.find({'last_crawled.at': null}).limit(100)
+                hasNext = (users.length === 100)
+            }
+            console.log('(profile_detail) done')
+        } catch (err) {
+            throw err
+        }
+    }
+    async getDetail (user) {
+        try {
+            if (!user) throw 'Invalid User'
+            const detail = await this.IGPrf.getProfile(user)
+            return detail
+        } catch (err) {
+            throw err
+        }
+    }
+    async updateProfile (raw, username) {
+        try {
+            if (username) {
+                await this.db
+                    .InstagramProfiles
+                    .updateOne({
+                        'profile.username': username
+                    }, {
+                        $set: {
+                            'profile.id': result(raw, 'id', null),
+                            'profile.real_name': result(raw, 'full_name', null),
+                            'profile.profile_pic': result(raw, 'profile_pic_url', null),
+                            'profile.followers': result(raw, 'edge_followed_by.count', null),
+                            'profile.following': result(raw, 'edge_follow.count', null),
+                            'profile.bio': result(raw, 'biography', null),
+                            raw,
+                            last_crawled: {
+                                page: 0,
+                                at: new Date()
+                            }
+                        }
+                    })
+            }
+            return false
+        } catch (err) { throw err }
+    }
 }
 
-new IGProfiles().run().catch(() => { process.exit(0) })
+// new IGProfiles().run().catch(() => { process.exit(0) })
+new IGProfiles().profileDetail().catch(() => { process.exit(0) })
