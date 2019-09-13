@@ -1,6 +1,6 @@
 'use strict'
 
-if (typeof use !== 'function') require('../App/Bootstrap')
+if (typeof use !== 'function') require('../../App/Bootstrap')
 
 const { MongoAdapter } = use('Libs/DbAdapter')
 const IgLocator = use('Services/IGLocations')
@@ -11,7 +11,7 @@ const sleep = function (timeout = 10) {
     })
 }
 
-class InstagramLocation {
+class InstagramLocationCrawler {
     constructor () {
         this.locator = new IgLocator()
         this.db = new MongoAdapter()
@@ -23,7 +23,7 @@ class InstagramLocation {
             .setup()
     }
 
-    async run () {
+    async run (args = {}) {
         try {
             // await this.getInstagramCountries()
             await this.getAllCitiesOfCountries()
@@ -138,4 +138,4 @@ class InstagramLocation {
     }
 }
 
-new InstagramLocation().run()
+module.exports = InstagramLocationCrawler

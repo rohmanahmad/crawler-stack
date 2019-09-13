@@ -10,15 +10,11 @@ class R10TwitterPostExample {
         this.mapper = new DataMapper
         this.db_adapter = DbAdapter
     }
-    async handle (args = {}) {
+    async run (args = {}) {
         try {
             // 
         } catch (err) { throw err }
     }
 }
 
-// running app R10TwitterPostExample
-new R10TwitterPostExample()
-    .handle()
-        .then(console.log)
-        .catch(console.error)
+module.exports = R10TwitterPostExample
