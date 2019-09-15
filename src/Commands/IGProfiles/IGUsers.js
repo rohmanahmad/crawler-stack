@@ -1,6 +1,6 @@
 'use strict'
 
-if (typeof use !== 'function') require('../App/Bootstrap')
+if (typeof use !== 'function') require('../../App/Bootstrap')
 
 const IGPrf = use('Services/IGProfiles')
 const { result } = require('lodash')
@@ -14,7 +14,7 @@ const sleep = function (timeout = 10) {
     })
 }
 
-class IGProfiles {
+class IGUsers {
     constructor () {
         this.db = new MongoAdapter()
             .setURI('MONGODB_URI_TRENDS')
@@ -140,5 +140,4 @@ class IGProfiles {
     }
 }
 
-// new IGProfiles().run().catch(() => { process.exit(0) })
-new IGProfiles().profileDetail().catch(() => { process.exit(0) })
+module.exports = IGUsers

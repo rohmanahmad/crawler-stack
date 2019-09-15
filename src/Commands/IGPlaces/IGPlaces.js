@@ -1,6 +1,6 @@
 'use strict'
 
-if (typeof use !== 'function') require('../App/Bootstrap')
+if (typeof use !== 'function') require('../../App/Bootstrap')
 const { MongoAdapter } = use('Libs/DbAdapter')
 const IGPlaceLocation = use('Services/IGPlaceLocation')
 
@@ -139,4 +139,4 @@ class IGPlace {
     }
 }
 
-new IGPlace().run()
+module.exports = IGPlace

@@ -21,6 +21,15 @@ class Trends {
             .setup()
     }
 
+    async run (args = {}) {
+        try {
+            const interval = args.interval || process.env.TRENDS_LOOP_INTERVAL || 15 * 60
+            this
+                .startOnce()
+                .startWithTimer(parseInt(interval))
+        } catch (err) { throw err }
+    }
+
     async startTwitter (nloop = 0) {
         try {
             const twTrends = new TwitterTrend()
@@ -125,6 +134,4 @@ class Trends {
     }
 }
 
-new Trends()
-    .startOnce()
-    .startWithTimer(parseInt(process.env.TRENDS_LOOP_INTERVAL || 15 * 60))
+module.exports = Trends
