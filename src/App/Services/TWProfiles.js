@@ -24,10 +24,15 @@ class TWProfile {
                         console.log('retry after 10s')
                         setTimeout(async () => {
                             resolve(await this.requestData(url))
-                        }, 10 * 1000)
+                        }, 100 * 1000)
                     } else {
-                        if (res.statusCode !== 200) throw body
-                        resolve(body)
+                        if (res.statusCode !== 200) {
+                            setTimeout(async () => {
+                                resolve(await this.requestData(url))
+                            }, 100 * 1000)
+                        } else {
+                            resolve(body)
+                        }
                     }
                 })
             } catch (err) {
