@@ -2,15 +2,16 @@
 
 if (typeof use !== 'function') require('../../App/Bootstrap')
 
-const IGPrf = use('Services/TWProfiles')
-const { result } = require('lodash')
+const TWPrf = use('Services/TWProfiles')
+// const { result } = require('lodash')
+// const md5 = require('md5')
 const { MongoAdapter } = use('Libs/DbAdapter')
-const L1 = Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ') // A-Z
+const L1 = Array.from('abcdefghijklmnopqrstuvwxyz') // A-Z
 const L2 = Array.apply(null, {length: 25}).map(Number.call, Number).map(x => x + 1) // 1 - 26
-console.log(L2)
 
 const sleep = function (timeout = 10) {
     return new Promise((resolve) => {
+        // console.log('sleep:', `${timeout}s`)
         setTimeout(resolve, timeout * 1000)
     })
 }
@@ -20,123 +21,107 @@ class TwitterUsers {
         this.db = new MongoAdapter()
             .setURI('MONGODB_URI_TRENDS')
             .models([
-                'InstagramProfiles'
+                'TwProfileUsers',
+                'TwProfileGroups'
             ])
             .setup()
-        this.IGPrf = new IGPrf()
+        this.TWPrf = new TWPrf()
     }
-    async run ({start}) {
+    async run ({group}) {
         try {
-            for (let index1 = 0; index1 <= L1; index1++) {
-                for (let index2 = 0; index2 <= L2; index2++) {
-                    try {
-                        const users = await this.IGPrf.getAllProfiles(index1, index2)
-                        await this.updateUsers(users, { index1, index2 })
-                        await sleep(5)
-                    } catch (err) {
-                        console.log(err)
-                    }
-                }
+            if (!group) {
+                this.getGroups(group).catch((err) => { throw err })
+                this.getUsername().catch((err) => { throw err })
             }
         } catch (err) {
             console.log(err)
             throw err
         }
     }
-    async updateUsers (data = [], { index1, index2 }) {
+    async getUsername () {
         try {
-            data = JSON.parse(data)
-            for (const user of data) {
-                await this.db
-                    .InstagramProfiles
-                    .updateOne({
-                        'profile.username': user
-                    }, {
-                        $set: {
-                            updated_at: new Date()
-                        },
-                        $setOnInsert: {
-                            index: {
-                                one: index1,
-                                two: index2
-                            },
-                            profile: {
-                                id: null,
-                                username: user,
-                                real_name: null,
-                                profile_pic: null,
-                                followers: null,
-                                following: null,
-                                bio: null
-                            },
-                            created_at: new Date(),
-                            raw: {},
-                            last_crawled: {
-                                page: 0,
-                                at: null
-                            }
-                        }
-                    }, { upsert: true })
+            const groups = await this.db.TwProfileGroups.find({user_crawled: {$ne: true}, level: 3})
+            for (let group of groups) {
+                const parent = {id: group._id, title: group.title}
+                const {items} = await this.TWPrf.getUsernameByGroup([group.uniqId])
+                await this.updateUsers(items, {parent})
+                await sleep(30)
             }
-        } catch (err) { throw err }
+            await sleep(10)
+        } catch (err) {
+            throw err
+        }
     }
-    async profileDetail () {
+    async getGroups (group) {
         try {
-            let users = await this.db.InstagramProfiles.find({'last_crawled.at': null}).limit(100)
-            let hasNext = (users.length === 100)
-            while (hasNext) {
-                for (let user of users) {
-                    try {
-                        const username = result(user, 'profile.username')
-                        const raw = await this.getDetail(username)
-                        await this.updateProfile(raw, username)
-                        await sleep(5)
-                    } catch (err) {
-                        console.log(err)
+            let isUsername = false
+            let n = 1
+            let groups = group ? [group] : [...L1, ...L2]
+            while (!isUsername) {
+                let loop = 0
+                for (const g of groups) {
+                    // console.log('..'.repeat(20), '#' + n , '..'.repeat(20))
+                    let data = await this.TWPrf.getGroup([g], { n })
+                    isUsername = data.isUsername
+                    if (!isUsername) {
+                        if (loop === 0) {
+                            // console.log('--'.repeat(20), 'resetting groups to []')
+                            groups = []
+                        }
+                        groups = groups.concat(data.items.map(x => x.uniqId))
+                        await this.updateGroups(data.items)
                     }
+                    loop += 1
                 }
-                users = await this.db.InstagramProfiles.find({'last_crawled.at': null}).limit(100)
-                hasNext = (users.length === 100)
+                n += 1
+                await sleep(10)
             }
-            console.log('(profile_detail) done')
         } catch (err) {
             throw err
         }
     }
-    async getDetail (user) {
+    async updateUsers (items, { parent }) {
         try {
-            if (!user) throw 'Invalid User'
-            const detail = await this.IGPrf.getProfile(user)
-            return detail
+            for (let item of items) {
+                await this.db.TwProfileUsers.updateOne({username: item.uniqId}, {
+                    $setOnInsert: {
+                        created_at: new Date(),
+                        username: item.uniqId,
+                        url: item.url_user,
+                        parent_group: parent
+                    },
+                    $set: {
+                        last_crawled_at: new Date()
+                    }
+                }, {upsert: true})
+            }
+            console.log('(users) saved!', items.length, 'rows')
         } catch (err) {
             throw err
         }
     }
-    async updateProfile (raw, username) {
+    async updateGroups (items) {
         try {
-            if (username) {
-                await this.db
-                    .InstagramProfiles
-                    .updateOne({
-                        'profile.username': username
-                    }, {
-                        $set: {
-                            'profile.id': result(raw, 'id', null),
-                            'profile.real_name': result(raw, 'full_name', null),
-                            'profile.profile_pic': result(raw, 'profile_pic_url', null),
-                            'profile.followers': result(raw, 'edge_followed_by.count', null),
-                            'profile.following': result(raw, 'edge_follow.count', null),
-                            'profile.bio': result(raw, 'biography', null),
-                            raw,
-                            last_crawled: {
-                                page: 0,
-                                at: new Date()
-                            }
-                        }
-                    })
+            for (let item of items) {
+                await this.db.TwProfileGroups.updateOne({uniqId: item.uniqId}, {
+                    $setOnInsert: {
+                        created_at: new Date(),
+                        title: item.title.trim(),
+                        level: item.level,
+                        uniqId: item.uniqId,
+                        user_crawled: false,
+                        url: item.url
+                    },
+                    $set: {
+                        last_crawled_at: new Date()
+                    }
+                }, {upsert: true})
             }
-            return false
-        } catch (err) { throw err }
+            const {title, level} = items[0]
+            console.log(`(groups) saved!`, items.length, 'rows', `[${level}] ${title}(sample)`)
+        } catch (err) {
+            throw err
+        }
     }
 }
 
