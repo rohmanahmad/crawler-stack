@@ -6,6 +6,7 @@ const {result, transform} = require('lodash')
 const Schema = mongoose.Schema
 
 const CurrentSchema = new Schema({
+    _id: Schema.Types.ObjectId,
     group: String,
     uniqId: String,
     url: String,
