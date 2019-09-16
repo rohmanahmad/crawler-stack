@@ -30,7 +30,7 @@ class TwitterUsers {
     async run ({group}) {
         try {
             if (!group) {
-                this.getGroups(group).catch((err) => { throw err })
+                // this.getGroups(group).catch((err) => { throw err })
                 this.getUsername().catch((err) => { throw err })
             }
         } catch (err) {
