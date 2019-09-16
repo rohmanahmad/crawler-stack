@@ -2,7 +2,7 @@
 
 if (typeof use !== 'function') require('../../App/Bootstrap')
 
-const TWPrf = use('Services/TWProfiles')
+const TWPrf = use('Libs/Twitter/TwitterProfiles')
 // const { result } = require('lodash')
 // const md5 = require('md5')
 const { MongoAdapter } = use('Libs/DbAdapter')
@@ -27,11 +27,13 @@ class TwitterUsers {
             .setup()
         this.TWPrf = new TWPrf()
     }
-    async run ({group}) {
+    async run ({group, getgroups, getusernames}) {
         try {
-            if (!group) {
-                // this.getGroups(group).catch((err) => { throw err })
-                this.getUsername().catch((err) => { throw err })
+            if (getgroups === 'yes') this.getGroups(group).catch((err) => { throw err })
+            if (getusernames === 'yes') this.getUsername().catch((err) => { throw err })
+            if (getgroups !== 'yes' && getusernames !== 'yes') {
+                console.log('no type selected')
+                process.exit(0)
             }
         } catch (err) {
             console.log(err)
@@ -40,12 +42,13 @@ class TwitterUsers {
     }
     async getUsername () {
         try {
+            console.log('getting all usernames')
             const groups = await this.db.TwProfileGroups.find({user_crawled: {$ne: true}, level: 3})
             for (let group of groups) {
                 const parent = {id: group._id, title: group.title}
                 const {items} = await this.TWPrf.getUsernameByGroup([group.uniqId])
                 await this.updateUsers(items, {parent})
-                await sleep(30)
+                await sleep(10)
             }
             await sleep(10)
         } catch (err) {
@@ -54,9 +57,10 @@ class TwitterUsers {
     }
     async getGroups (group) {
         try {
+            console.log('getting all groups')
             let isUsername = false
             let n = 1
-            let groups = group ? [group] : [...L1, ...L2]
+            let groups = group ? group.split(',').filter(x => x.length > 0) : [...L1, ...L2]
             while (!isUsername) {
                 let loop = 0
                 for (const g of groups) {
@@ -95,6 +99,12 @@ class TwitterUsers {
                     }
                 }, {upsert: true})
             }
+            await this.db.TwProfileGroups.updateOne({_id: parent.id}, {
+                $set: {
+                    updated_at: new Date(),
+                    user_crawled: true
+                }
+            })
             console.log('(users) saved!', items.length, 'rows')
         } catch (err) {
             throw err

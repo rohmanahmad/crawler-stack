@@ -64,7 +64,7 @@ class TWProfile {
             let items = []
             let isUsername = false
             for (let url of urls) {
-                // console.log('(group) requesting:', url)
+                console.log('(group) requesting:', url)
                 try {
                     let body = await this.requestData(url)
                     body = body.replace(/\n/g, ' ')
