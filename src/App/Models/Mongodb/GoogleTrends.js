@@ -9,6 +9,7 @@ const CurrentSchema = new Schema({
     source: String,
     position: Number,
     date: Date,
+    date_detail: {},
     tren_id: String,
     text: String,
     post: {

@@ -56,6 +56,11 @@ class TwitterTrends {
                             source: 'twitter',
                             position,
                             date: new Date(),
+                            date_detail: {
+                                date: moment().format('YYYY-MM-DD'),
+                                hour: moment().format('HH'),
+                                minute: moment().format('mm')
+                            },
                             tren_id: id,
                             text,
                             post: {

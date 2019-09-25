@@ -7,6 +7,9 @@ const cssBracketDefault = [
     'fontawesome/css/all.min.css',
     'ionicons/css/ionicons.min.css'
 ]
+const customTrendStyle = [
+    '/css/trend-style.css'
+]
 const jsBracketDefault = [
     '/perfect-scrollbar/perfect-scrollbar.min.js',
     '/jquery/jquery.min.js',
@@ -27,6 +30,7 @@ AssetsData['/trendings'] = {
     theme: 'bracket',
     css: [
         ...cssBracketDefault,
+        ...customTrendStyle,
         // '/morris.js/morris.css',
         '/chartjs/Chart.min.css'
     ],

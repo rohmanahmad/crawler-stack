@@ -1,0 +1,22 @@
+<ol class="breadcrumb whitebg">
+    <li class="breadcrumb-menu">
+        <input id="since" type="date" placeholder="date" class="form-control"/>
+    </li>
+    <li class="breadcrumb-menu" style="padding-left: 10px;">
+        <input id="until" type="date" placeholder="date" class="form-control"/>
+    </li>
+    <li class="breadcrumb-menu" style="padding-left: 10px; width: 100px;">
+        <select id="until" class="form-control">
+            <option value="">Hour</option>
+            - var val = 0
+            while val < 24
+                <option value="#{val++}">#{val++}</option>
+        </select>
+    </li>
+    <li class="breadcrumb-menu" style="padding-left: 10px;">
+        <button class="btn btn-primary">Search</button>
+    </li>
+</ol>
+
+//- script
+//-     - document.getElementById('since').valueAsDate = new Date();
